@@ -4,19 +4,9 @@ try:
 except ImportError:
     import urlparse
 
-import sys
-import json
+import rapidjson
+from rapidjson import DM_ISO8601, UM_HEX
 import requests
-
-
-PY2 = sys.version_info[0] == 2
-
-if not PY2:
-    def to_bytes(s):
-        return s.encode("latin-1")
-else:
-    def to_bytes(s):
-        return s
 
 
 class CentException(Exception):
@@ -106,9 +96,9 @@ class Client(object):
         messages = self._messages[:]
         self._messages = []
         url = self.prepare_url()
-        data = to_bytes("\n".join([json.dumps(x, cls=self.json_encoder) for x in messages]))
+        data = "\n".join([rapidjson.dumps(x, uuid_mode=UM_HEX, datetime_mode=DM_ISO8601) for x in messages])
         response = self._send(url, data)
-        return [json.loads(x) for x in response.split("\n") if x]
+        return [rapidjson.loads(x, uuid_mode=UM_HEX, datetime_mode=DM_ISO8601) for x in response.split("\n") if x]
 
     def _send(self, url, data):
         """
